@@ -1,0 +1,12 @@
+{
+  "files.associations": {
+    "package.json": "json",
+    "package-lock.json": "json",
+    "tsconfig.json": "jsonc",
+    "*.json": "json"
+  },
+  "python.defaultInterpreterPath": "${workspaceFolder}/services/ai/venv/bin/python",
+  "python.analysis.venvPath": "${workspaceFolder}/services/ai",
+  "python.analysis.venv": "venv"
+}
+
