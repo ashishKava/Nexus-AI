@@ -33,6 +33,8 @@ jobs:
 
       - name: Generate Prisma Client Types
         run: cd apps/api && pnpm exec prisma generate
+        env:
+          DATABASE_URL: "postgresql://nexus:nexus_password@localhost:5432/nexus?schema=public"
 
       - name: Typecheck Fastify API
         run: pnpm --filter api typecheck
