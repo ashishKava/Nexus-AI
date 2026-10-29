@@ -31,11 +31,16 @@ jobs:
       - name: Build Shared Types Package
         run: pnpm --filter @nexus/types build
 
+      - name: Generate Prisma Client Types
+        run: cd apps/api && pnpm exec prisma generate
+
       - name: Typecheck Fastify API
         run: pnpm --filter api typecheck
 
       - name: Build Next.js Web App
         run: pnpm --filter web build
+        env:
+          NEXT_PUBLIC_API_URL: "http://localhost:4000"
 
   test-api:
     name: Fastify API Integration Tests (PostgreSQL)
@@ -50,10 +55,10 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U nexus -d nexus"
           --health-interval 5s
           --health-timeout 5s
-          --health-retries 5
+          --health-retries 10
 
     steps:
       - name: Checkout Repository
@@ -82,12 +87,12 @@ jobs:
           pnpm exec prisma generate
           pnpm exec prisma migrate deploy
         env:
-          DATABASE_URL: "postgresql://nexus:nexus_password@localhost:5432/nexus?schema=public"
+          DATABASE_URL: "postgresql://nexus:nexus_password@127.0.0.1:5432/nexus?schema=public"
 
       - name: Run Vitest API Test Suite
         run: pnpm --filter api test
         env:
-          DATABASE_URL: "postgresql://nexus:nexus_password@localhost:5432/nexus?schema=public"
+          DATABASE_URL: "postgresql://nexus:nexus_password@127.0.0.1:5432/nexus?schema=public"
           AI_SERVICE_URL: "http://localhost:8000"
 
   test-ai:

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from "vitest";
 import { buildApp } from "../app.js";
 
 describe("Standalone Workspaces & Events API", () => {
@@ -139,8 +139,25 @@ describe("Standalone Workspaces & Events API", () => {
     expect(events.length).toBe(1);
     expect(events[0].id).toBe(event.id);
 
-    // 5. Retrieve analytics via API
-    // Note: We need at least 1 event. Since FastAPI is mocked/running, let's verify standard responses.
+    // 5. Retrieve analytics via API with mocked AI microservice response
+    const mockReport = {
+      workspaceId: workspace.id,
+      totalEvents: 1,
+      meanDurationMs: 120.5,
+      medianDurationMs: 120.5,
+      stdDevDurationMs: 0.0,
+      anomalies: [],
+    };
+
+    const spyFetch = vi.spyOn(global, "fetch").mockImplementation(() => {
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        text: () => Promise.resolve(JSON.stringify(mockReport)),
+        json: () => Promise.resolve(mockReport),
+      } as any);
+    });
+
     const analyticsResponse = await app.inject({
       method: "GET",
       url: `/api/v1/workspaces/${workspace.id}/analytics`,
@@ -154,5 +171,6 @@ describe("Standalone Workspaces & Events API", () => {
     expect(result.events.length).toBe(1);
     expect(result.report).toBeDefined();
     expect(result.report.workspaceId).toBe(workspace.id);
+    spyFetch.mockRestore();
   });
 });
