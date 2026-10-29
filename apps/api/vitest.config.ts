@@ -5,5 +5,6 @@ export default defineConfig({
     environment: "node",
     setupFiles: ["dotenv/config"],
     fileParallelism: false, // Runs test files sequentially to prevent database query race conditions
+    exclude: ["dist/**", "node_modules/**"],
   },
 });

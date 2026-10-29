@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAuth, API_URL } from "../context/AuthContext";
 
 interface Organization {
@@ -36,6 +37,7 @@ export default function DashboardPage() {
   const [orgCreating, setOrgCreating] = useState(false);
   const [workspaceCreating, setWorkspaceCreating] = useState(false);
   const [loadingWorkspaces, setLoadingWorkspaces] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -43,6 +45,18 @@ export default function DashboardPage() {
       router.push("/login");
     }
   }, [token, authLoading, router]);
+
+  // Listen to AI Agent workspace creation events to refresh dashboard in real-time
+  useEffect(() => {
+    const handleAction = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail?.type === "CREATE_WORKSPACE") {
+        setRefreshTrigger((prev) => prev + 1);
+      }
+    };
+    window.addEventListener("nexus_action_executed", handleAction);
+    return () => window.removeEventListener("nexus_action_executed", handleAction);
+  }, []);
 
   // Load user's organizations
   // Note: Since we don't have a direct "list user's organizations" endpoint yet,
@@ -118,7 +132,7 @@ export default function DashboardPage() {
     };
 
     fetchWorkspaces();
-  }, [selectedOrg, token]);
+  }, [selectedOrg, token, refreshTrigger]);
 
   const handleCreateOrg = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -331,14 +345,15 @@ export default function DashboardPage() {
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {workspaces.map((workspace) => (
-                      <div
+                      <Link
                         key={workspace.id}
-                        className="bg-zinc-900 border border-zinc-800/80 p-6 rounded-xl hover:border-zinc-700/80 transition duration-200 shadow-md group relative overflow-hidden"
+                        href={`/dashboard/workspaces/${workspace.id}`}
+                        className="bg-zinc-900 border border-zinc-800/80 p-6 rounded-xl hover:border-zinc-700/80 transition duration-200 shadow-md group relative overflow-hidden block text-left"
                       >
                         <div className="absolute top-0 left-0 h-[2px] w-full bg-gradient-to-r from-purple-500 to-indigo-500 opacity-0 group-hover:opacity-100 transition duration-200"></div>
                         <h3 className="font-bold text-white text-lg">{workspace.name}</h3>
                         <p className="text-xs text-zinc-500 mt-1">/{workspace.slug}</p>
-                      </div>
+                      </Link>
                     ))}
                     {workspaces.length === 0 && (
                       <div className="col-span-full py-16 text-center border border-dashed border-zinc-800 rounded-xl bg-zinc-900/20">

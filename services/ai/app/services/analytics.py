@@ -18,6 +18,7 @@ def analyze_workspace_events(workspace_id: str, events: List[WorkspaceEvent]) ->
     for e in events:
         # Convert timestamp to naive datetime or keep as timezone-aware
         data.append({
+            "id": e.id,
             "eventType": e.eventType,
             "durationMs": e.durationMs,
             "timestamp": e.timestamp
@@ -46,6 +47,7 @@ def analyze_workspace_events(workspace_id: str, events: List[WorkspaceEvent]) ->
         for _, row in anomalies_df.iterrows():
             anomalies.append(
                 AnomalyDetail(
+                    id=row.get("id") if pd.notna(row.get("id")) else None,
                     eventType=row["eventType"],
                     durationMs=float(row["durationMs"]),
                     timestamp=row["timestamp"],

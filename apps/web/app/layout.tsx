@@ -18,6 +18,7 @@ export const metadata: Metadata = {
 };
 
 import { AuthProvider } from "./context/AuthContext";
+import AIChatDrawer from "./components/AIChatDrawer";
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
@@ -26,7 +27,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          {children}
+          <AIChatDrawer />
+        </AuthProvider>
       </body>
     </html>
   );

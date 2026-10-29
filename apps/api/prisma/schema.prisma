@@ -11,7 +11,7 @@ model User {
   email       String               @unique
   name        String?
   password    String
-  createdAt   DateTime             @default(now())
+  createdAt   DateTime             @default(now())  
   updatedAt   DateTime             @updatedAt
   memberships OrganizationMember[]
 
@@ -54,16 +54,46 @@ model OrganizationMember {
 }
 
 model Workspace {
-  id             String       @id @default(uuid())
+  id             String           @id @default(uuid())
   name           String
   slug           String
-  organizationId String       @map("organization_id")
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  organizationId String           @map("organization_id")
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
 
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  events         WorkspaceEvent[]
+  documents      Document[]
 
   @@unique([organizationId, slug])
   @@index([organizationId])
   @@map("workspaces")
 }
+
+model WorkspaceEvent {
+  id          String   @id @default(uuid())
+  workspaceId String   @map("workspace_id")
+  eventType   String   @map("event_type")
+  durationMs  Float    @map("duration_ms")
+  timestamp   DateTime @default(now())
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@map("workspace_events")
+}
+
+model Document {
+  id          String   @id @default(uuid())
+  name        String
+  url         String   // Path/URI to file storage
+  mimeType    String   @map("mime_type")
+  workspaceId String   @map("workspace_id")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  
+  @@map("documents")
+}
+

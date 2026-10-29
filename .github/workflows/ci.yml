@@ -1,0 +1,114 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  typecheck-and-lint:
+    name: TypeScript Check & Web Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.15.0
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install Node Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Shared Types Package
+        run: pnpm --filter @nexus/types build
+
+      - name: Typecheck Fastify API
+        run: pnpm --filter api typecheck
+
+      - name: Build Next.js Web App
+        run: pnpm --filter web build
+
+  test-api:
+    name: Fastify API Integration Tests (PostgreSQL)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: nexus
+          POSTGRES_PASSWORD: nexus_password
+          POSTGRES_DB: nexus
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.15.0
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install Node Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Shared Types
+        run: pnpm --filter @nexus/types build
+
+      - name: Run Prisma Migrations & Generate Client
+        run: |
+          cd apps/api
+          pnpm exec prisma generate
+          pnpm exec prisma migrate deploy
+        env:
+          DATABASE_URL: "postgresql://nexus:nexus_password@localhost:5432/nexus?schema=public"
+
+      - name: Run Vitest API Test Suite
+        run: pnpm --filter api test
+        env:
+          DATABASE_URL: "postgresql://nexus:nexus_password@localhost:5432/nexus?schema=public"
+          AI_SERVICE_URL: "http://localhost:8000"
+
+  test-ai:
+    name: Python AI Engine Pytest Suite
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r services/ai/requirements.txt
+
+      - name: Run Pytest (Analytics & RAG Tests)
+        run: |
+          cd services/ai
+          PYTHONPATH=. pytest

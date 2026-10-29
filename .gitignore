@@ -1,10 +1,13 @@
 # Dependency directories
 node_modules/
+**/node_modules/
 jspm_packages/
 web_modules/
+uploads/
 
 # Next.js, build, and distribution outputs
 dist/
+**/dist/
 build/
 out/
 .next/
@@ -62,3 +65,7 @@ desktop.ini
 *.swp
 .vscode/ipch/
 .vscode/commands.log
+
+# App runtime data
+services/ai/rag_store.json
+packages/*/dist/

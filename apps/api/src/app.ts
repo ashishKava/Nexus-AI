@@ -12,7 +12,11 @@ import { authRoutes } from "./modules/auth/auth.routes.js";
 import { userRoutes } from "./modules/users/users.routes.js";
 import { organizationRoutes } from "./modules/organizations/organizations.routes.js";
 import { workspaceRoutes } from "./modules/workspaces/workspaces.routes.js";
+import { standaloneWorkspaceRoutes } from "./modules/workspaces/standaloneWorkspaces.routes.js";
 import { aiRoutes } from "./modules/ai/ai.routes.js";
+import multipart from "@fastify/multipart";
+import { documentsRoutes } from "./modules/documents/documents.routes.js";
+import { chatRoutes } from "./modules/chat/chat.routes.js";
 
 export function buildApp() {
   const app = Fastify({
@@ -40,6 +44,13 @@ export function buildApp() {
   app.register(cors, {
     origin: true, // Allow all origins in dev, customize for production
     credentials: true,
+  });
+
+  // Multipart form-data handling (uploads)
+  app.register(multipart, {
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10MB file limit
+    },
   });
 
   // Database Connection Plugin
@@ -80,6 +91,9 @@ export function buildApp() {
     v1.register(userRoutes, { prefix: "/users" });
     v1.register(organizationRoutes, { prefix: "/organizations" });
     v1.register(workspaceRoutes, { prefix: "/organizations/:orgId/workspaces" });
+    v1.register(standaloneWorkspaceRoutes, { prefix: "/workspaces" });
+    v1.register(documentsRoutes, { prefix: "/workspaces/:workspaceId/documents" });
+    v1.register(chatRoutes, { prefix: "/chat" });
     v1.register(aiRoutes, { prefix: "/ai" });
   }, { prefix: "/api/v1" });
 
